@@ -30,8 +30,3 @@ O projeto melhora a experiência de navegação no Google Drive, exibindo os arq
 - Não há build nem dependências externas neste repositório.
 - Após alterar o código, basta recarregar a extensão em `chrome://extensions` e atualizar a aba do Drive.
 
-## Regras do Projeto
-
-- Não versionar arquivos operacionais locais, como `AGENTS.md`, na branch `main`.
-- Instruções permanentes do projeto devem ficar em arquivos de documentação do repositório, como `README.md` ou um `CONTRIBUTING.md` aprovado.
-- Se precisar de notas temporárias para trabalho local, mantenha-as fora do versionamento.
