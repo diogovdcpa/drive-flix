@@ -12,6 +12,10 @@ let renderFrame = 0; // throttle do render progressivo
 let scanComplete = false; // finalização da varredura
 const documentCache = new Map(); // cache de HTML já carregado nesta sessão
 const subtreeCache = new Map(); // cache de subárvore já varrida
+const naturalCollator = new Intl.Collator("pt-BR", {
+  numeric: true,
+  sensitivity: "base",
+});
 
 // ===================== HELPERS =====================
 function truncate(str, max) {
@@ -137,29 +141,23 @@ function isPlayable(file) {
   return /\.(mp4|webm|mkv|mov|avi|m4v)\b/.test(n);
 }
 
+function compareNatural(a, b) {
+  return naturalCollator.compare(normalizeWhitespace(a), normalizeWhitespace(b));
+}
+
 function sortByName(items) {
-  return [...items].sort((a, b) =>
-    (a.name || "").localeCompare(b.name || "", "pt-BR", { sensitivity: "base" })
-  );
+  return [...items].sort((a, b) => compareNatural(a.name || "", b.name || ""));
 }
 
 function sortByPath(items) {
-  return [...items].sort((a, b) =>
-    (a.path || "").localeCompare(b.path || "", "pt-BR", { sensitivity: "base" })
-  );
+  return [...items].sort((a, b) => compareNatural(a.path || "", b.path || ""));
 }
 
 function sortVideos(items) {
   return [...items].sort((a, b) => {
-    const sectionCompare = (a.sectionPath || "").localeCompare(
-      b.sectionPath || "",
-      "pt-BR",
-      { sensitivity: "base" }
-    );
+    const sectionCompare = compareNatural(a.sectionPath || "", b.sectionPath || "");
     if (sectionCompare !== 0) return sectionCompare;
-    return (a.name || "").localeCompare(b.name || "", "pt-BR", {
-      sensitivity: "base",
-    });
+    return compareNatural(a.name || "", b.name || "");
   });
 }
 
