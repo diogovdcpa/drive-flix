@@ -79,12 +79,26 @@ function cleanDriveLabel(label) {
     /^shared drive$/i,
     /^compartilhado comigo$/i,
     /^pasta compartilhada$/i,
+    /^Pasta compartilhada$/i,
     /^meu disco$/i,
     /^my drive$/i,
   ];
 
   if (ignored.some((pattern) => pattern.test(value))) return "";
-  return value;
+
+  return value
+    .replace(/\s+(Pasta compartilhada|Shared folder|shared folder|shared drive|compartilhado comigo|my drive|meu disco)\s*$/i, "")
+    .replace(/^\s*(Pasta compartilhada|Shared folder|shared folder|shared drive|compartilhado comigo|my drive|meu disco)\s+/i, "")
+    .replace(/\s{2,}/g, " ")
+    .trim();
+}
+
+function normalizeDrivePath(path) {
+  return normalizeWhitespace(path)
+    .split(/\s*\/\s*/)
+    .map((part) => cleanDriveLabel(part))
+    .filter(Boolean)
+    .join(" / ");
 }
 
 function getRootLabel(doc = document) {
@@ -99,11 +113,21 @@ function getRootLabel(doc = document) {
 }
 
 function getRelativePath(fullPath, rootPath) {
-  if (!rootPath) return fullPath;
-  const prefix = `${rootPath} / `;
-  if (fullPath.startsWith(prefix)) return fullPath.slice(prefix.length);
-  if (fullPath === rootPath) return rootPath;
-  return fullPath;
+  const cleanFullPath = normalizeDrivePath(fullPath);
+  const cleanRootPath = normalizeDrivePath(rootPath);
+  if (!cleanRootPath) return cleanFullPath;
+  const prefix = `${cleanRootPath} / `;
+  if (cleanFullPath.startsWith(prefix)) return cleanFullPath.slice(prefix.length);
+  if (cleanFullPath === cleanRootPath) return cleanRootPath;
+  return cleanFullPath;
+}
+
+function shouldShowSectionPath(title, path) {
+  const cleanTitle = normalizeDrivePath(title);
+  const cleanPath = normalizeDrivePath(path);
+  if (!cleanPath || !cleanTitle) return Boolean(cleanPath);
+  if (cleanPath === cleanTitle) return false;
+  return !cleanPath.endsWith(cleanTitle);
 }
 
 function isPlayable(file) {
@@ -470,7 +494,9 @@ function renderSections() {
   currentSections.forEach((section) => {
     const sectionEl = document.createElement("section");
     sectionEl.className = "nf-section";
-    const title = section.displayTitle || section.title;
+    const title = normalizeDrivePath(section.displayTitle || section.title);
+    const sectionPath = normalizeDrivePath(section.path);
+    const showPath = shouldShowSectionPath(title, sectionPath);
 
     sectionEl.innerHTML = `
       <div class="nf-section-head">
@@ -478,9 +504,13 @@ function renderSections() {
           <div class="nf-section-title" title="${escapeHtml(title)}">${escapeHtml(
       truncate(title, 64)
     )}</div>
-          <div class="nf-section-path" title="${escapeHtml(section.path)}">${escapeHtml(
-      section.path
-    )}</div>
+          ${
+            showPath
+              ? `<div class="nf-section-path" title="${escapeHtml(sectionPath)}">${escapeHtml(
+                  sectionPath
+                )}</div>`
+              : ""
+          }
         </div>
         <span class="nf-section-count">${section.items.length} vídeo(s)</span>
       </div>`;
@@ -577,8 +607,10 @@ function renderModal(file, withNav) {
       }</span>`
     : "";
   const sectionPath = file.sectionPath
-    ? `<span class="nf-modal-subtitle" title="${escapeHtml(file.sectionPath)}">${escapeHtml(
-        truncate(file.sectionPath, 96)
+    ? `<span class="nf-modal-subtitle" title="${escapeHtml(
+        normalizeDrivePath(file.sectionPath)
+      )}">${escapeHtml(
+        truncate(normalizeDrivePath(file.sectionPath), 96)
       )}</span>`
     : "";
 
