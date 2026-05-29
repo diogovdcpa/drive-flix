@@ -1,0 +1,16 @@
+{
+  "manifest_version": 3,
+  "name": "Drive Flix",
+  "version": "1.0",
+  "description": "Exibe arquivos do Google Drive em layout responsivo com preview em modal e navegação sequencial.",
+  "permissions": ["activeTab", "scripting"],
+  "host_permissions": ["https://drive.google.com/*"],
+  "content_scripts": [
+    {
+      "matches": ["https://drive.google.com/*"],
+      "js": ["content.js"],
+      "css": ["styles.css"],
+      "run_at": "document_idle"
+    }
+  ]
+}
